@@ -1,8 +1,8 @@
-## Virtual Joystick
+## Virtual Bluetooth Joystick
 
 This is a very simple and straight-forward implementation that emulates Joystick functionality via Bluetooth.
 
-Virtual Bluetooth Joystick turns your smartphone into a remote controller for home automation or robotic applications.
+Virtual Bluetooth Joystick turns your smartphone into a remote controller for automation or robotic applications. The custom joystick view uses a previous [Virtual Joystick project](https://github.com/teocci/VirtualJoystick).
 
 ### Disclaimer
 
