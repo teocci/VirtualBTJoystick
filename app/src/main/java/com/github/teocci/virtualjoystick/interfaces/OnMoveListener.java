@@ -17,4 +17,6 @@ public interface OnMoveListener
      * @param strength current strength
      */
     void onMove(int angle, int strength);
+
+    void onHeightMove(int posY, int fixedCenterY);
 }

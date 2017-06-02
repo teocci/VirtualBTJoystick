@@ -5,10 +5,10 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.os.Handler;
 import android.widget.Toast;
 
 import com.github.teocci.virtualjoystick.ui.DeviceListActivity;
+import com.github.teocci.virtualjoystick.ui.MainActivity;
 import com.github.teocci.virtualjoystick.utils.Debug;
 
 import java.io.InputStream;
@@ -17,8 +17,8 @@ import java.util.UUID;
 
 public class BluetoothService
 {
-    private BluetoothAdapter adapter;
     private Activity activity;
+    private BluetoothAdapter adapter;
 
     // Serial connection
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
@@ -35,7 +35,7 @@ public class BluetoothService
     private final static int REQUEST_ENABLE_BT = 1;
     private final static int REQUEST_CONNECT_DEVICE = 2;
 
-    public BluetoothService(Activity activity, Handler handler)
+    public BluetoothService(Activity activity)
     {
         this.activity = activity;
 
@@ -49,7 +49,7 @@ public class BluetoothService
 
     public void enableBluetooth()
     {
-        if (!adapter.isEnabled()) {
+        if ( !adapter.isEnabled() ) {
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             activity.startActivityForResult(intent, REQUEST_ENABLE_BT);
         }
@@ -73,18 +73,13 @@ public class BluetoothService
         this.state = state;
     }
 
-    private synchronized int getState()
-    {
-        return state;
-    }
-
     private synchronized void start()
     {
-        if (connectThread != null) {
+        if ( connectThread != null ) {
             connectThread.cancel();
             connectThread = null;
         }
-        if (connectedThread != null) {
+        if ( connectedThread != null ) {
             connectedThread.cancel();
             connectedThread = null;
         }
@@ -92,13 +87,13 @@ public class BluetoothService
 
     private synchronized void connect(BluetoothDevice device)
     {
-        if (state == STATE_CONNECTING) {
-            if (connectThread != null) {
+        if ( state == STATE_CONNECTING ) {
+            if ( connectThread != null ) {
                 connectThread.cancel();
                 connectThread = null;
             }
         }
-        if (connectedThread != null) {
+        if ( connectedThread != null ) {
             connectedThread.cancel();
             connectedThread = null;
         }
@@ -108,13 +103,13 @@ public class BluetoothService
         setState(STATE_CONNECTING);
     }
 
-    private synchronized void connected(BluetoothSocket socket, BluetoothDevice device)
+    private synchronized void connected(BluetoothSocket socket)
     {
-        if (connectThread != null) {
+        if ( connectThread != null ) {
             connectThread.cancel();
             connectThread = null;
         }
-        if (connectedThread != null) {
+        if ( connectedThread != null ) {
             connectedThread.cancel();
             connectedThread = null;
         }
@@ -125,11 +120,11 @@ public class BluetoothService
 
     public synchronized void stop()
     {
-        if (connectThread != null) {
+        if ( connectThread != null ) {
             connectThread.cancel();
             connectThread = null;
         }
-        if (connectedThread != null) {
+        if ( connectedThread != null ) {
             connectedThread.cancel();
             connectedThread = null;
         }
@@ -140,11 +135,10 @@ public class BluetoothService
     {
         Debug.log("write");
         ConnectedThread r;
-        synchronized (this) {
-            if (state != STATE_CONNECTED)
+        synchronized ( this ) {
+            if ( state != STATE_CONNECTED )
                 return;
             r = connectedThread;
-
             r.write(out);
         }
     }
@@ -156,61 +150,53 @@ public class BluetoothService
 
     public void connectionLost()
     {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(activity, "연결이 끊겼습니다.", Toast.LENGTH_SHORT).show();
+            }
+        });
+        ((MainActivity)activity).stopConnection();
         setState(STATE_LISTEN);
     }
 
     private class ConnectThread extends Thread
     {
-        private BluetoothDevice device;
-        private BluetoothSocket socket;
+        private BluetoothSocket bluetoothSocket;
 
         public ConnectThread(BluetoothDevice device)
         {
-            this.device = device;
-
-            BluetoothSocket tmp = null;
             try {
-                tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
-            } catch (Exception e) {
+                bluetoothSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
+            } catch ( Exception e ) {
                 Debug.err(e);
             }
-            socket = tmp;
         }
 
         public void run()
         {
-            setName("ConnectThread");
-
             adapter.cancelDiscovery();
-
             try {
-                socket.connect();
-            } catch (Exception e) {
+                bluetoothSocket.connect();
+            } catch ( Exception e ) {
                 Debug.err(e);
                 connectionFailed();
-
-                try {
-                    socket.close();
-                } catch (Exception e1) {
-                    Debug.err(e1);
-                }
-
+                cancel();
                 BluetoothService.this.start();
                 return;
             }
 
-            synchronized (BluetoothService.this) {
+            synchronized ( BluetoothService.this ) {
                 connectThread = null;
             }
-
-            connected(socket, device);
+            connected(bluetoothSocket);
         }
 
         public void cancel()
         {
             try {
-                socket.close();
-            } catch (Exception e) {
+                bluetoothSocket.close();
+            } catch ( Exception e ) {
                 Debug.err(e);
             }
         }
@@ -218,46 +204,37 @@ public class BluetoothService
 
     private class ConnectedThread extends Thread
     {
-        private BluetoothSocket socket;
+        private BluetoothSocket bluetoothSocket;
         private InputStream inputStream;
         private OutputStream outputStream;
 
         public ConnectedThread(BluetoothSocket socket)
         {
-            this.socket = socket;
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
-
+            this.bluetoothSocket = socket;
             try {
-                tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
-            } catch (Exception e) {
+                inputStream = socket.getInputStream();
+                outputStream = socket.getOutputStream();
+            } catch ( Exception e ) {
                 Debug.err(e);
             }
-            inputStream = tmpIn;
-            outputStream = tmpOut;
 
-            activity.runOnUiThread(new Runnable()
-            {
+            activity.runOnUiThread(new Runnable() {
                 @Override
-                public void run()
-                {
+                public void run() {
                     Toast.makeText(activity, "Connected", Toast.LENGTH_SHORT).show();
                 }
             });
+            ((MainActivity)activity).successConnection();
         }
 
         public void run()
         {
             byte[] buf = new byte[1024];
-            int bytes;
-
-            while (true) {
-                Debug.log("4444");
+            while ( true ) {
+                Debug.log("socket read");
                 try {
-                    bytes = inputStream.read(buf);
-                    Debug.log("232323 :  " + bytes);
-                } catch (Exception e) {
+                    inputStream.read(buf);
+                } catch ( Exception e ) {
                     Debug.err(e);
                     connectionLost();
                     break;
@@ -268,8 +245,9 @@ public class BluetoothService
         public void write(byte[] buf)
         {
             try {
+                Debug.log("socket send");
                 outputStream.write(buf);
-            } catch (Exception e) {
+            } catch ( Exception e ) {
                 Debug.err(e);
             }
         }
@@ -277,8 +255,8 @@ public class BluetoothService
         public void cancel()
         {
             try {
-                socket.close();
-            } catch (Exception e) {
+                bluetoothSocket.close();
+            } catch ( Exception e ) {
                 Debug.err(e);
             }
         }
