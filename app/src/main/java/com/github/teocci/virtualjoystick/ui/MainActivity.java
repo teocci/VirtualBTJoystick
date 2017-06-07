@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 import com.github.teocci.virtualjoystick.BluetoothService;
 import com.github.teocci.virtualjoystick.R;
+import com.github.teocci.virtualjoystick.core.BluetoothControlCore;
 import com.github.teocci.virtualjoystick.interfaces.BluetoothControlListener;
 import com.github.teocci.virtualjoystick.interfaces.OnMoveListener;
 import com.github.teocci.virtualjoystick.utils.Debug;

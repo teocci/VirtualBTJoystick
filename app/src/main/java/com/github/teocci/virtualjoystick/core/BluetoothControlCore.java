@@ -1,4 +1,4 @@
-package com.github.teocci.virtualjoystick.ui;
+package com.github.teocci.virtualjoystick.core;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -37,8 +37,8 @@ public class BluetoothControlCore extends AsyncTask<Void, Void, Void>
                 Socket client = serverSocket.accept();
                 Debug.log("S: Receiving...");
 
-                CommunicationThread commuThread = new CommunicationThread(context, client);
-                commuThread.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                BluetoothClientThread clientThread = new BluetoothClientThread(context, client);
+                clientThread.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         } catch ( Exception e ) {
             Debug.err(e);

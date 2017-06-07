@@ -1,4 +1,4 @@
-package com.github.teocci.virtualjoystick.ui;
+package com.github.teocci.virtualjoystick.core;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -10,13 +10,13 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
-public class CommunicationThread extends AsyncTask<Void, Void, Void>
+public class BluetoothClientThread extends AsyncTask<Void, Void, Void>
 {
     private Context context;
     private Socket clientSocket;
     private BufferedReader input;
 
-    public CommunicationThread(Context context, Socket socket)
+    public BluetoothClientThread(Context context, Socket socket)
     {
         this.context = context;
         this.clientSocket = socket;
