@@ -30,7 +30,6 @@
         <activity
             android:name="com.github.teocci.virtualjoystick.ui.DeviceListActivity"
             android:launchMode="singleTop"
-            android:screenOrientation="landscape"
             android:theme="@android:style/Theme.DeviceDefault.Dialog" >
         </activity>
 
